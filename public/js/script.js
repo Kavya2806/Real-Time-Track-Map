@@ -1,5 +1,6 @@
 const socket= io();
-
+let mylocation=null;
+let mapcenter=false;
 if(navigator.geolocation){
     navigator.geolocation.watchPosition((position)=>{
         const lat=position.coords.latitude;
@@ -7,6 +8,7 @@ if(navigator.geolocation){
         const speed=position.coords.speed;
         const direction=position.coords.heading;
         const altitude=position.coords.altitude;
+        mylocation=[lat,lng];
         console.log(`Latitude: ${lat}, Longitude: ${lng}, Speed: ${speed}, Direction: ${direction}, Altitude: ${altitude}`);
         socket.emit('location',{lat,lng,speed,direction,altitude});
         
@@ -29,7 +31,13 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
 const marker={};
 socket.on('received-location',(data)=>{
     const {id,lat,lng,speed,direction,altitude}=data;
-    map.setView([lat,lng], 16);
+
+ if (!mapcenter) {
+        map.setView([lat, lng], 16);
+        mapcenter = true;
+    }
+
+    // map.setView([lat,lng], 16);
     if(marker[id]){
         marker[id].setLatLng([lat,lng]).setPopupContent(`
             Speed: ${speed ?? 'N/A'} m/s <br>
@@ -43,6 +51,18 @@ socket.on('received-location',(data)=>{
                 Direction: ${direction ?? 'N/A'}° <br>
                 Altitude: ${altitude ?? 'N/A'} m
             `);
+
+            marker[id].on('click',()=>{
+                if(mylocation){
+                    const distance=map.distance(mylocation,[lat,lng]);
+                    this.setPopupContent(`
+                        Speed: ${speed ?? 'N/A'} m/s <br>
+                        Direction: ${direction ?? 'N/A'}° <br>
+                        Altitude: ${altitude ?? 'N/A'} m <br>
+                        Distance: ${distance.toFixed(2)} km
+                    `).openPopup();
+                }
+            })
     }
 
 });
