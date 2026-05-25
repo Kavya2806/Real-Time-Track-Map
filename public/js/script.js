@@ -42,30 +42,40 @@ socket.on('received-location',(data)=>{
         marker[id].setLatLng([lat,lng]);
 
 
-        // .setPopupContent(`
-        //     Speed: ${speed ?? 'N/A'} m/s <br>
-        //     Direction: ${direction ?? 'N/A'}° <br>
-        //     Altitude: ${altitude ?? 'N/A'} m
-        // `);
-
-
           marker[id].featureData={
             speed,
             direction,
             altitude
           };
 
+ if (marker[id].isPopupOpen()) {
+
+const latest =marker[id].featureData;
+                  let distancetext = '';
+
+                if (mylocation) {
+
+                    const distance =
+                        map.distance(
+                            mylocation,
+                            marker[id]
+                                .getLatLng()
+                        );
+
+               distancetext = `Distance: ${(distance / 1000).toFixed(2)} km`;
+                    }
+
+            marker[id].setPopupContent(`
+                Speed: ${latest.speed ?? 'N/A'} m/s <br>
+                Direction: ${latest.direction ?? 'N/A'}° <br>
+                Altitude: ${latest.altitude ?? 'N/A'} m <br>
+                ${distancetext}
+            `);
+        }
 
 
     }else{
-        marker[id]=L.marker([lat,lng]).addTo(map);
-
-
-        // .bindPopup(`
-        //         Speed: ${speed ?? 'N/A'} m/s <br>
-        //         Direction: ${direction ?? 'N/A'}° <br>
-        //         Altitude: ${altitude ?? 'N/A'} m
-        //     `);
+        marker[id]=L.marker([lat,lng]).addTo(map).bindPopup('');
 
          marker[id].featureData={
             speed,
@@ -76,11 +86,7 @@ socket.on('received-location',(data)=>{
 
             marker[id].on('click', function (){
 
-                  const {
-                   speed,
-                   direction,
-                   altitude
-                         } = this.featureData;
+                  const latest = this.featureData;
 
                       let distancetext=' ';
                 if(mylocation){
@@ -91,13 +97,14 @@ socket.on('received-location',(data)=>{
 
 
 
-                    this.bindPopup(`
-                        Speed: ${speed ?? 'N/A'} m/s <br>
-                        Direction: ${direction ?? 'N/A'}° <br>
-                        Altitude: ${altitude ?? 'N/A'} m <br>
+                    this.setPopupContent(`
+                        Speed: ${latest.speed ?? 'N/A'} m/s <br>
+                        Direction: ${latest.direction ?? 'N/A'}° <br>
+                        Altitude: ${latest.altitude ?? 'N/A'} m <br>
                         ${distancetext}
-                    `).openPopup();
-                
+                    `);
+                    this.openPopup();
+                    
             })
     }
 
