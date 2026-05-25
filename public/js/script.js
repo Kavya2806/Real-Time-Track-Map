@@ -39,29 +39,65 @@ socket.on('received-location',(data)=>{
 
     // map.setView([lat,lng], 16);
     if(marker[id]){
-        marker[id].setLatLng([lat,lng]).setPopupContent(`
-            Speed: ${speed ?? 'N/A'} m/s <br>
-            Direction: ${direction ?? 'N/A'}° <br>
-            Altitude: ${altitude ?? 'N/A'} m
-        `);
+        marker[id].setLatLng([lat,lng]);
+
+
+        // .setPopupContent(`
+        //     Speed: ${speed ?? 'N/A'} m/s <br>
+        //     Direction: ${direction ?? 'N/A'}° <br>
+        //     Altitude: ${altitude ?? 'N/A'} m
+        // `);
+
+
+          marker[id].featureData={
+            speed,
+            direction,
+            altitude
+          };
+
+
 
     }else{
-        marker[id]=L.marker([lat,lng]).addTo(map).bindPopup(`
-                Speed: ${speed ?? 'N/A'} m/s <br>
-                Direction: ${direction ?? 'N/A'}° <br>
-                Altitude: ${altitude ?? 'N/A'} m
-            `);
+        marker[id]=L.marker([lat,lng]).addTo(map);
 
-            marker[id].on('click',()=>{
+
+        // .bindPopup(`
+        //         Speed: ${speed ?? 'N/A'} m/s <br>
+        //         Direction: ${direction ?? 'N/A'}° <br>
+        //         Altitude: ${altitude ?? 'N/A'} m
+        //     `);
+
+         marker[id].featureData={
+            speed,
+            direction,
+            altitude
+          };
+
+
+            marker[id].on('click', function (){
+
+                  const {
+                   speed,
+                   direction,
+                   altitude
+                         } = this.featureData;
+
+                      let distancetext=' ';
                 if(mylocation){
-                    const distance=map.distance(mylocation,[lat,lng]);
-                    this.setPopupContent(`
+                    const distance=map.distance(mylocation,this.getLatLng());
+
+                        distancetext=`<br>Distance: ${(distance/1000).toFixed(2)} km`;
+                }
+
+
+
+                    this.bindPopup(`
                         Speed: ${speed ?? 'N/A'} m/s <br>
                         Direction: ${direction ?? 'N/A'}° <br>
                         Altitude: ${altitude ?? 'N/A'} m <br>
-                        Distance: ${distance.toFixed(2)} km
+                        ${distancetext}
                     `).openPopup();
-                }
+                
             })
     }
 
